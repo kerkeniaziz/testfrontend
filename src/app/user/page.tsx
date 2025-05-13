@@ -19,19 +19,33 @@ interface Pocket {
   subpockets: Subpocket[];
 }
 
+const fetchuser = () => {
+    const { selectedUser } = useUser();
+    return selectedUser;
+}
+
 const fetchPockets = async (): Promise<Pocket[]> => {
-  const res = await fetch('http://localhost:8000/pockets');
-  if (!res.ok) throw new Error('Failed to fetch pockets');
-  return res.json();
-};
+    const user = fetchuser();
+    const res = await fetch('http://localhost:8000/pockets',{
+      method: 'POST',
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+      body: JSON.stringify({ user }), 
+    });
+    if (!res.ok) throw new Error('Failed to fetch pockets');
+    return res.json();
+  };
 
 export default function UserPocketView() {
-  const { selectedUser } = useUser();
+    const selectedUser = fetchuser();
   const { data: pockets, isLoading, isError } = useQuery({
     queryKey: ['pockets'],
     queryFn: fetchPockets,
     enabled: !!selectedUser,
   });
+
+  
 
   const [notes, setNotes] = useState<Record<string, string>>({}); // key = subpocket.id
 
