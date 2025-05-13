@@ -15,7 +15,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 interface Subpocket {
@@ -61,7 +61,31 @@ export default function PocketList() {
   const [openPocketId, setOpenPocketId] = useState<string | null>(null);
   const [orderedPockets, setOrderedPockets] = useState<Pocket[] | null>(null);
 
-  const pocketData = orderedPockets || pockets || [];
+  const pocketData = (orderedPockets || pockets || []).slice().sort((a, b) => a.order - b.order);
+
+
+
+  ///// react query to patch the orders
+  
+const queryClient = useQueryClient();
+
+const updatePocketOrder = async ({ id, order }: { id: string; order: number }) => {
+  const res = await fetch(`http://localhost:8000/pockets`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, order }),
+  });
+
+  if (!res.ok) throw new Error('Failed to update order');
+  
+  return res.json(); 
+};
+
+const { mutate: mutatePocketOrder } = useMutation({
+  mutationFn: updatePocketOrder,
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pockets'] }),
+});
+//////////////////////////////
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -74,18 +98,44 @@ export default function PocketList() {
     })
   );
 
+
+  /// handel the drag and mutate the order with backend
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
+    
+    // Check if the drag-and-drop action is valid
     if (!over || active.id === over.id) return;
-
-    // Reorder pockets
+  
+    // Find the old and new indexes of the pockets in the array
     const oldIndex = pocketData.findIndex((p) => p.id === active.id);
     const newIndex = pocketData.findIndex((p) => p.id === over.id);
-    const newOrder = [...pocketData];
-    const [moved] = newOrder.splice(oldIndex, 1);
-    newOrder.splice(newIndex, 0, moved);
-    setOrderedPockets(newOrder);
+  
+    // Create a new array of pockets with updated order
+    const reordered = [...pocketData];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+  
+    // Update the order of each pocket based on the new index
+    const updatedWithOrder = reordered.map((pocket, index) => ({
+      ...pocket,
+      order: index,
+    }));
+  
+    // Update the UI with the new order
+    setOrderedPockets(updatedWithOrder);
+  
+    // Trigger the mutation to update the order on the backend
+    updatedWithOrder.forEach((pocket) => {
+      // Only trigger the mutation if the order has actually changed
+      if (pocket.order !== pocketData.find((p) => p.id === pocket.id)?.order) {
+        mutatePocketOrder({ id: pocket.id, order: pocket.order });
+      }
+    });
   };
+  
+  
+  
+  
 
   if (isLoading) return <p>Loading pockets...</p>;
   if (isError) return <p>Failed to load pockets.</p>;

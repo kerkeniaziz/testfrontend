@@ -25,28 +25,33 @@ const fetchuser = () => {
 }
 
 const fetchPockets = async (): Promise<Pocket[]> => {
-    const selectedUser = fetchuser();
+  
+  const selectedUser = fetchuser();
+    
     const res = await fetch('http://localhost:8000/pockets/user',{
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
       },
       body: JSON.stringify({ selectedUser }), 
     });
-    console.log('res', res);
+    
     if (!res.ok) throw new Error('Failed to fetch pockets');
-    return res.json();
+    const data =  res.json();
+    console.log('data', data);
+  
+    return data;
   };
 
 export default function UserPocketView() {
     const selectedUser = fetchuser();
   const { data: pockets, isLoading, isError } = useQuery({
+    
     queryKey: ['pockets'],
     queryFn: fetchPockets,
+    
   });
-
-  
-
   const [notes, setNotes] = useState<Record<string, string>>({}); // key = subpocket.id
 
   if (!selectedUser) return <p>Please select a user.</p>;
@@ -55,6 +60,7 @@ export default function UserPocketView() {
 
   return (
     <div className="space-y-6 p-4">
+      
       {pockets?.map((pocket) => {
 
         return (
