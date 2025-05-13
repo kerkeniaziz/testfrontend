@@ -30,14 +30,15 @@ interface Pocket {
   name: string;
   description: string;
   order: number;
-  createdAt: string;
-  subpockets: Subpocket[];
+  subPockets: Subpocket[];
 }
 
 const fetchPockets = async (): Promise<Pocket[]> => {
   const res = await fetch('http://localhost:8000/pockets');
   if (!res.ok) throw new Error('Failed to fetch pockets');
-  return res.json();
+  const data = await res.json();
+  console.log('data', data);
+  return data;
 };
 
 function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
@@ -63,8 +64,14 @@ export default function PocketList() {
   const pocketData = orderedPockets || pockets || [];
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Minimum movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
   const handleDragEnd = (event: any) => {
@@ -92,19 +99,22 @@ export default function PocketList() {
               <div className="border border-gray-300 shadow-md p-4 rounded-lg bg-white hover:shadow-lg transition">
                 <h2
                   className="text-xl font-semibold mb-2 cursor-pointer text-blue-600"
-                  onClick={() => setOpenPocketId((prev) => (prev === pocket.id ? null : pocket.id))}
+                  onClick={() => {
+                    console.log('Pocket clicked:', pocket.id);
+                    setOpenPocketId((prev) => (prev === pocket.id ? null : pocket.id));
+                  }}
                 >
                   {pocket.name}
                 </h2>
-                <p className="text-gray-600 mb-2">{pocket.description}</p>
+                <p className="text-gray-600 mb-2">{pocket.order}</p>
 
                 {openPocketId === pocket.id && (
                   <ul className="mt-4 border-t pt-2 text-sm text-gray-700">
-                    <SortableContext items={pocket.subpockets.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-                      {pocket.subpockets?.length === 0 && (
+                    <SortableContext items={pocket.subPockets.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                      {pocket.subPockets.length === 0 && (
                         <li className="text-gray-400 italic">No subpockets</li>
                       )}
-                      {pocket.subpockets?.map((sub) => (
+                      {pocket.subPockets.map((sub) => (
                         <SortableItem key={sub.id} id={sub.id}>
                           <li className="py-1 pl-2 border-l-2 border-blue-400">📂 {sub.name}</li>
                         </SortableItem>
