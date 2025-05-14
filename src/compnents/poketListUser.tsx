@@ -38,7 +38,8 @@ export default function PocketListUser() {
 
   return (
     <div className="space-y-6 p-4">
-      {pockets?.map((pocket) => {
+      {pockets && pockets.length > 0 ? (
+      pockets?.map((pocket) => {
         const isOpen = openPocketId === pocket.id;
 
         return (
@@ -64,7 +65,10 @@ export default function PocketListUser() {
             )}
           </div>
         );
-      })}
+      })
+    ) : (
+  <p className="text-gray-400 italic">No pockets found.</p>
+)}
     </div>
   );
 }
