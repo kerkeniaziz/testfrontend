@@ -2,12 +2,10 @@ import PocketListUser from "@/compnents/poketListUser";
 
 
 
-export default function Admin() {
-    return (
-<div className=" items-center justify-items-stretch  p-8 pb-20   ">
-      
+export default function UserPage() {
+  return (
+    <div className=" items-center justify-items-stretch  p-8 pb-20   ">
       <PocketListUser />
-
-    </div>            
-    );
+    </div>
+  );
 }

@@ -1,5 +1,4 @@
 
-import { Providers } from "@/compnents/provider";
 
 
 export default function RootLayout({
@@ -9,9 +8,7 @@ export default function RootLayout({
 }>) {
   return (
     <>
-        <Providers>
         {children}
-        </Providers>
-        </>
+    </>
   );
 }

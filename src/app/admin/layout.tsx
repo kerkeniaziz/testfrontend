@@ -9,9 +9,7 @@ export default function RootLayout({
 }>) {
   return (
     <>
-        <Providers>
-        {children}
-        </Providers>
-        </>
+      {children}
+    </>
   );
 }

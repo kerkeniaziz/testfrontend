@@ -1,4 +1,5 @@
 'use client';
+import UserSelection from '@/compnents/userSelection';
 import { createContext, useContext, useState } from 'react';
 
 interface User {
@@ -19,6 +20,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   return (
     <UserContext.Provider value={{ selectedUser, setSelectedUser }}>
+      <UserSelection />
       {children}
     </UserContext.Provider>
   );

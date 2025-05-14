@@ -18,12 +18,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import PocketCard from './pocketCard';
+import { User } from './userSelection';
 
 export interface Subpocket {
   id: string;
   name: string;
   description: string;
   order: number;
+  notes?: { description: string; user: User; }[];
 }
 
 export interface Pocket {
@@ -37,6 +39,7 @@ export interface Pocket {
 const fetchPockets = async (): Promise<Pocket[]> => {
   const res = await fetch('http://localhost:8000/pockets');
   if (!res.ok) throw new Error('Failed to fetch pockets');
+  
   return res.json();
 };
 

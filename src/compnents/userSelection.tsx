@@ -2,9 +2,9 @@
 
 import { useUser } from '@/context/userContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
-interface User {
+export interface User {
   id: string;
   firstName: string;
   role: string;
@@ -12,6 +12,7 @@ interface User {
 
 export default function UserSelection() {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading , startTransition] = useTransition()
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const { setSelectedUser } = useUser();
   const router = useRouter();
@@ -39,12 +40,14 @@ export default function UserSelection() {
     if (!user) return;
 
     setSelectedUser(user); // ✅ Save to context
-
-    if (user.role === 'ADMIN') {
-      router.push('/admin');
-    } else if (user.role === 'USER') {
-      router.push('/user');
-    }
+    startTransition(() => {
+      if (user.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (user.role === 'USER') {
+        console.log('User role:', user.role);
+        router.push('/user');
+      }
+    });
   };
 
   return (
@@ -55,7 +58,7 @@ export default function UserSelection() {
         className="p-2 border border-gray-800 rounded-lg"
       >
         <option value="" disabled>
-          Select a user
+          Select a user 
         </option>
         {users.map((user) => (
           <option key={user.id} value={user.id} className="bg-gray-700">
@@ -66,10 +69,10 @@ export default function UserSelection() {
 
       <button
         onClick={handleGoToPage}
-        disabled={!selectedUserId}
+        disabled={!selectedUserId || loading}
         className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
       >
-        Go to page
+        {loading ? "redirecting..." :"Go to page"}
       </button>
     </div>
   );
