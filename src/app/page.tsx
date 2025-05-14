@@ -1,6 +1,3 @@
-import PocketList from "@/compnents/pocketList";
-import UserSelection from "@/compnents/userSelection";
-
 
 export default function Home() {
 
