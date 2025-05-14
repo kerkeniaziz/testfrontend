@@ -49,9 +49,8 @@ export default function SubPocketItem({ sub }: { sub: Subpocket }) {
         const newNote = await AddNote(note, selectedUser, sub);
         if (newNote) {
         await queryClient.invalidateQueries({queryKey: ['pockets']});
-         // ✅ Trigger refetch
-        handleClose(); // ✅ Close the dialog
-        setNote('');   // ✅ Clear input
+        handleClose(); 
+        setNote('');   
     }
       } catch (err) {
         console.error('Error submitting note:', err);

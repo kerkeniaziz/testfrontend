@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pocket } from './pocketList';
 import SubPocketItem from './subPocketItem';
-//import { User } from './userSelection';
+
 
 async function fetchPockets(selectedUser: any): Promise<Pocket[]> {
   const res = await fetch('http://localhost:8000/pockets/user', {
@@ -29,7 +29,7 @@ export default function PocketListUser() {
   const { data: pockets, isLoading, isError } = useQuery({
     queryKey: ['pockets', selectedUser],
     queryFn: () => fetchPockets(selectedUser),
-    enabled: !!selectedUser, // wait for selectedUser to exist
+    enabled: !!selectedUser, // wait for selectedUser to be selected - it will not work until the user is selected
   });
 
   if (!selectedUser) return <p>Please select a user.</p>;
@@ -58,8 +58,6 @@ export default function PocketListUser() {
                 ) : (
                     pocket.subPockets.map((sub) => (
                         <SubPocketItem key={sub.id} sub={sub} />
-
-                  
                   ))
                 )}
               </ul>

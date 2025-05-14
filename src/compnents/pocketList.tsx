@@ -3,14 +3,12 @@
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -43,14 +41,18 @@ const fetchPockets = async (): Promise<Pocket[]> => {
   return res.json();
 };
 
-function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+
+//the drag and drop function witch transform the warpped element to a drag and drop element
+export function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
+  // defain the style so when drag-and-drop become better in ui 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
+  // warping the shild to use it multi dom element (like provider)
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {children}
@@ -63,6 +65,8 @@ export default function PocketList() {
   const [openPocketId, setOpenPocketId] = useState<string | null>(null);
   const [orderedPockets, setOrderedPockets] = useState<Pocket[] | null>(null);
 
+
+  // Sort the pockets by order (using the data)       .slice clone the data    .sort to sort the data by the order given
   const pocketData = (orderedPockets || pockets || []).slice().sort((a, b) => a.order - b.order);
 
 
@@ -71,6 +75,7 @@ export default function PocketList() {
   
 const queryClient = useQueryClient();
 
+// passing an object in the props { id, order } 
 const updatePocketOrder = async ({ id, order }: { id: string; order: number }) => {
   const res = await fetch(`http://localhost:8000/pockets`, {
     method: 'PATCH',
@@ -79,10 +84,11 @@ const updatePocketOrder = async ({ id, order }: { id: string; order: number }) =
   });
 
   if (!res.ok) throw new Error('Failed to update order');
-  
   return res.json(); 
 };
 
+
+//react query for the update functions , useMutation
 const { mutate: mutatePocketOrder } = useMutation({
   mutationFn: updatePocketOrder,
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pockets'] }),
@@ -95,9 +101,6 @@ const { mutate: mutatePocketOrder } = useMutation({
         distance: 8, // Minimum movement before drag starts
       },
     }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
   );
 
 
