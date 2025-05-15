@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { Subpocket } from './pocketList';
 import { useUser } from '@/context/userContext';
 import { User } from './userSelection';
 import {  useQueryClient } from '@tanstack/react-query';
 
-export default function SubPocketItem({ sub }: { sub: Subpocket }) {
+const SubPocketItem = React.memo(function SubPocketItem({ sub }: { sub: Subpocket }) {
   const [isOpen, setIsOpen] = useState(false);
   const [note, setNote] = useState('');
   const { selectedUser } = useUser() ;
@@ -109,3 +109,5 @@ export default function SubPocketItem({ sub }: { sub: Subpocket }) {
     </>
   );
 }
+);
+export default SubPocketItem;

@@ -15,14 +15,14 @@ import {
 } from '@dnd-kit/sortable';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Pocket, Subpocket } from './pocketList';
+import React, { useState } from 'react';
+
 import {SortableItem} from './pocketList'
+import { Pocket, Subpocket } from '@/types';
 
 
 
-// ✅ Composant principal PocketCard
-export default function PocketCard({
+const PocketCard = React.memo( function PocketCard({
   pocket,
   isOpen,
   onToggleOpen,
@@ -38,21 +38,38 @@ export default function PocketCard({
 
   const queryClient = useQueryClient();
 
-  const updatePocketOrder = async ({ id, order }: { id: string; order: number }) => {
-    const res = await fetch(`http://localhost:8000/sub-pockets`, {
+  // const updatePocketOrder = async ({ id, order }: { id: string; order: number }) => {
+  //   const res = await fetch(`http://localhost:8000/sub-pockets`, {
+  //     method: 'PATCH',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ id, order }),
+  //   });
+
+  //   if (!res.ok) throw new Error('Failed to update order');
+  //   return res.json();
+  // };
+
+  const updatePocketOrderBulk = async ({ updates }: { updates: { id: string; order: number }[] }) => {
+    const res = await fetch(`http://localhost:8000/sub-pockets/order`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, order }),
+      body: JSON.stringify({ updates }),
     });
 
     if (!res.ok) throw new Error('Failed to update order');
     return res.json();
   };
 
-  const { mutate: mutatePocketOrder } = useMutation({
-    mutationFn: updatePocketOrder,
+  
+  const { mutate: mutatePocketOrderBulk } = useMutation({
+    mutationFn: updatePocketOrderBulk,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subPockets'] }),
   });
+
+  // const { mutate: mutatePocketOrder } = useMutation({
+  //   mutationFn: updatePocketOrder,
+  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subPockets'] }),
+  // });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -73,12 +90,26 @@ export default function PocketCard({
     const updatedWithOrder = reordered.map((p, index) => ({ ...p, order: index }));
     setOrderedSubPockets(updatedWithOrder);
 
-    updatedWithOrder.forEach((sub) => {
-      const original = pocket.subPockets.find((p) => p.id === sub.id);
-      if (original && original.order !== sub.order) {
-        mutatePocketOrder({ id: sub.id, order: sub.order });
-      }
-    });
+    // updatedWithOrder.forEach((sub) => {
+    //   const original = pocket.subPockets.find((p) => p.id === sub.id);
+    //   if (original && original.order !== sub.order) {
+    //     mutatePocketOrder({ id: sub.id, order: sub.order });
+    //   }
+    // });
+
+    const changedSubPockets = updatedWithOrder
+  .filter((sub) => {
+    const original = pocket.subPockets.find((p) => p.id === sub.id);
+    return original && original.order !== sub.order;
+  })
+  .map((sub) => ({
+    id: sub.id,
+    order: sub.order,
+  }));
+    
+    if (changedSubPockets.length > 0) {
+      mutatePocketOrderBulk({ updates: changedSubPockets });
+    }
   };
 
   return (
@@ -111,3 +142,6 @@ export default function PocketCard({
     </div>
   );
 }
+);
+
+export default PocketCard;

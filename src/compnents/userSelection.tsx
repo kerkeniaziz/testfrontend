@@ -1,14 +1,11 @@
 'use client';
 
 import { useUser } from '@/context/userContext';
+import { User } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
-export interface User {
-  id: string;
-  firstName: string;
-  role: string;
-}
+
 
 export default function UserSelection() {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,7 +41,6 @@ export default function UserSelection() {
       if (user.role === 'ADMIN') {
         router.push('/admin');
       } else if (user.role === 'USER') {
-        console.log('User role:', user.role);
         router.push('/user');
       }
     });

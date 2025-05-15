@@ -14,25 +14,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import PocketCard from './pocketCard';
-import { User } from './userSelection';
+import { Pocket } from '@/types';
 
-export interface Subpocket {
-  id: string;
-  name: string;
-  description: string;
-  order: number;
-  notes?: { description: string; user: User; }[];
-}
 
-export interface Pocket {
-  id: string;
-  name: string;
-  description: string;
-  order: number;
-  subPockets: Subpocket[];
-}
 
 const fetchPockets = async (): Promise<Pocket[]> => {
   const res = await fetch('http://localhost:8000/pockets');
@@ -76,11 +62,11 @@ export default function PocketList() {
 const queryClient = useQueryClient();
 
 // passing an object in the props { id, order } 
-const updatePocketOrder = async ({ id, order }: { id: string; order: number }) => {
-  const res = await fetch(`http://localhost:8000/pockets`, {
+const updatePocketOrderBulk = async ({ updates }: {updates:{ id: string; order: number }[]}) => {
+  const res = await fetch(`http://localhost:8000/pockets/order`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, order }),
+    body: JSON.stringify({updates}),
   });
 
   if (!res.ok) throw new Error('Failed to update order');
@@ -89,8 +75,8 @@ const updatePocketOrder = async ({ id, order }: { id: string; order: number }) =
 
 
 //react query for the update functions , useMutation
-const { mutate: mutatePocketOrder } = useMutation({
-  mutationFn: updatePocketOrder,
+const { mutate: mutatePocketOrderBulk } = useMutation({
+  mutationFn: updatePocketOrderBulk,
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pockets'] }),
 });
 //////////////////////////////
@@ -129,16 +115,28 @@ const { mutate: mutatePocketOrder } = useMutation({
     // Update the UI with the new order
     setOrderedPockets(updatedWithOrder);
   
-    // Trigger the mutation to update the order on the backend
-    updatedWithOrder.forEach((pocket) => {
-      // Only trigger the mutation if the order has actually changed
-      if (pocket.order !== pocketData.find((p) => p.id === pocket.id)?.order) {
-        mutatePocketOrder({ id: pocket.id, order: pocket.order });
-      }
-    });
+    const changedPockets = updatedWithOrder
+  .filter((pocket) => {
+    const original = pocketData.find((p: Pocket) => p.id === pocket.id);
+    return original && original.order !== pocket.order;
+  })
+  .map((pocket) => ({
+    id: pocket.id,
+    order: pocket.order,
+  }));
+    
+    if (changedPockets.length > 0) {
+      mutatePocketOrderBulk({ updates: changedPockets });
+    }
+
   };
   
-  
+  const handleToggleOpen = useCallback(
+    (id: string) => {
+      setOpenPocketId((prev) => (prev === id ? null : id));
+    },
+    []
+  )
   
   
 
@@ -154,9 +152,7 @@ const { mutate: mutatePocketOrder } = useMutation({
               <PocketCard
                 pocket={pocket}
                 isOpen={openPocketId === pocket.id}
-                onToggleOpen={() =>
-                  setOpenPocketId((prev) => (prev === pocket.id ? null : pocket.id))
-                }
+                onToggleOpen={() => handleToggleOpen(pocket.id)}
               />
             </SortableItem>
           ))}

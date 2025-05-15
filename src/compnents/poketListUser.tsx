@@ -3,8 +3,8 @@
 import { useUser } from '@/context/userContext';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pocket } from './pocketList';
 import SubPocketItem from './subPocketItem';
+import { Pocket } from '@/types';
 
 
 async function fetchPockets(selectedUser: any): Promise<Pocket[]> {
